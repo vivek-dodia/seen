@@ -8,6 +8,10 @@ export default {
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL || process.env.STORAGE_URL!,
+    url:
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.STORAGE_URL!,
   },
 } satisfies Config
