@@ -5,7 +5,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { getMediaList, addMediaItem, removeMediaItem } from "@/lib/storage"
+import { getMediaList, addMediaItem, removeMediaItem, syncLocalStorageToDatabase } from "@/lib/storage"
 import type { MediaItem, OMDBSearchResponse, OMDBResponse, TVDBSearchResponse } from "@/lib/types"
 
 const ADMIN_PASSWORD = "seen2024"
@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   useEffect(() => {
     const auth = sessionStorage.getItem("admin-auth")
@@ -30,7 +31,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      setMediaList(getMediaList())
+      const loadMedia = async () => {
+        const list = await getMediaList()
+        setMediaList(list)
+      }
+      loadMedia()
     }
   }, [isAuthenticated])
 
@@ -90,24 +95,24 @@ export default function AdminPage() {
     }
   }
 
-  const handleAdd = (result: any) => {
-    const newItem: MediaItem = {
-      id: `${result.type}-${result.id}-${Date.now()}`,
+  const handleAdd = async (result: any) => {
+    const newItem = {
       ...(result.type === "movie" ? { imdbId: result.id } : { tvdbId: result.id }),
       title: result.title,
       year: result.year,
       poster: result.poster,
       type: result.type,
-      addedAt: new Date().toISOString(),
-    } as MediaItem
+    }
 
-    addMediaItem(newItem)
-    setMediaList(getMediaList())
+    await addMediaItem(newItem)
+    const updatedList = await getMediaList()
+    setMediaList(updatedList)
   }
 
-  const handleRemove = (id: string) => {
-    removeMediaItem(id)
-    setMediaList(getMediaList())
+  const handleRemove = async (id: string) => {
+    await removeMediaItem(id)
+    const updatedList = await getMediaList()
+    setMediaList(updatedList)
   }
 
   const isAlreadyAdded = (result: any) => {
@@ -116,6 +121,21 @@ export default function AdminPage() {
         (item.type === "movie" && result.type === "movie" && item.imdbId === result.id) ||
         (item.type === "series" && result.type === "series" && item.tvdbId === result.id),
     )
+  }
+
+  const handleSyncLocalStorage = async () => {
+    setIsSyncing(true)
+    try {
+      await syncLocalStorageToDatabase()
+      const updatedList = await getMediaList()
+      setMediaList(updatedList)
+      alert("Successfully synced localStorage to database!")
+    } catch (error) {
+      console.error("Sync failed:", error)
+      alert("Failed to sync data")
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   if (!isAuthenticated) {
@@ -179,32 +199,43 @@ export default function AdminPage() {
       {/* Content */}
       <div className="pt-20 pb-10 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Tabs */}
-          <div className="flex gap-4 mb-6">
-            <button
-              onClick={() => {
-                setActiveTab("movies")
-                setSearchResults([])
-                setSearchQuery("")
-              }}
-              className={`font-mono uppercase text-xs tracking-widest px-4 py-2 border transition-all ${
-                activeTab === "movies" ? "bg-white/10 border-white/40" : "border-white/10 hover:border-white/20"
-              }`}
-            >
-              Movies
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("shows")
-                setSearchResults([])
-                setSearchQuery("")
-              }}
-              className={`font-mono uppercase text-xs tracking-widest px-4 py-2 border transition-all ${
-                activeTab === "shows" ? "bg-white/10 border-white/40" : "border-white/10 hover:border-white/20"
-              }`}
-            >
-              Shows
-            </button>
+          {/* Tabs and Sync Button */}
+          <div className="flex gap-4 mb-6 items-center justify-between">
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setActiveTab("movies")
+                  setSearchResults([])
+                  setSearchQuery("")
+                }}
+                className={`font-mono uppercase text-xs tracking-widest px-4 py-2 border transition-all ${
+                  activeTab === "movies" ? "bg-white/10 border-white/40" : "border-white/10 hover:border-white/20"
+                }`}
+              >
+                Movies
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("shows")
+                  setSearchResults([])
+                  setSearchQuery("")
+                }}
+                className={`font-mono uppercase text-xs tracking-widest px-4 py-2 border transition-all ${
+                  activeTab === "shows" ? "bg-white/10 border-white/40" : "border-white/10 hover:border-white/20"
+                }`}
+              >
+                Shows
+              </button>
+            </div>
+            {localStorage.getItem("seen-media-list") && localStorage.getItem("synced-to-db") !== "true" && (
+              <button
+                onClick={handleSyncLocalStorage}
+                disabled={isSyncing}
+                className="font-mono uppercase text-xs tracking-widest px-4 py-2 border border-green-500/40 text-green-400 hover:bg-green-500/10 transition-all disabled:opacity-50"
+              >
+                {isSyncing ? "Syncing..." : "Sync localStorage"}
+              </button>
+            )}
           </div>
 
           {/* Search */}

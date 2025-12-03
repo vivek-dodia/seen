@@ -81,9 +81,12 @@ export default function SeenPage() {
   const [filter, setFilter] = useState<FilterType>("all")
 
   useEffect(() => {
-    const list = getMediaList()
-    setMediaList(list)
-    setIsLoading(false)
+    const loadMedia = async () => {
+      const list = await getMediaList()
+      setMediaList(list)
+      setIsLoading(false)
+    }
+    loadMedia()
   }, [])
 
   const filteredList = mediaList.filter((item) => {
