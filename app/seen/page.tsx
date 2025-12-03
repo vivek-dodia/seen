@@ -68,41 +68,26 @@ function MasonryGrid({ items }: { items: MediaItem[] }) {
       {columnItems.map((column, colIndex) => (
         <div key={colIndex} className="flex-1 flex flex-col gap-4">
           {column.map((item, itemIndex) => {
-            // Vary aspect ratios for visual interest - movie posters are typically taller
-            const aspectRatios = ["aspect-[2/3]", "aspect-[3/4]", "aspect-square", "aspect-[4/5]"]
-            const aspectClass =
-              item.type === "movie"
-                ? aspectRatios[itemIndex % 2] // Movies: 2:3 or 3:4 (taller)
-                : aspectRatios[(itemIndex % 2) + 2] // Shows: square or 4:5
-
             const isVisible = visibleItems.has(item.id)
 
             return (
               <div
                 id={item.id}
                 key={item.id}
-                className={`masonry-item relative group overflow-hidden bg-white/5 ${aspectClass} transition-all duration-700 ${
+                className={`masonry-item relative group overflow-hidden transition-all duration-700 ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 } hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-1`}
                 style={{ transitionDelay: `${itemIndex * 50}ms` }}
               >
                 {item.poster && item.poster !== "N/A" ? (
-                  <>
-                    <Image
-                      src={item.poster || "/placeholder.svg"}
-                      alt={item.title}
-                      fill
-                      className="object-cover transition-all duration-700 ease-out group-hover:brightness-110"
-                      sizes="(max-width: 480px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      style={{
-                        filter: "contrast(1.05) saturate(0.85) brightness(0.95)",
-                      }}
-                    />
-                    {/* Subtle color overlay for unified look */}
-                    <div className="absolute inset-0 bg-blue-950/5 mix-blend-overlay pointer-events-none transition-opacity duration-500 group-hover:opacity-0" />
-                    {/* Subtle border glow on hover */}
-                    <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/20 transition-all duration-500" />
-                  </>
+                  <Image
+                    src={item.poster || "/placeholder.svg"}
+                    alt={item.title}
+                    width={300}
+                    height={450}
+                    className="w-full h-auto transition-all duration-700 ease-out"
+                    sizes="(max-width: 480px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-mono text-xs text-center px-3 opacity-60">{item.title}</span>

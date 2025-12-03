@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { mediaItems } from "@/lib/db/schema"
-import { eq, or } from "drizzle-orm"
+import { eq, or, desc } from "drizzle-orm"
 
 // GET all media items
 export async function GET() {
   try {
-    const items = await db.select().from(mediaItems).orderBy(mediaItems.addedAt)
+    const items = await db.select().from(mediaItems).orderBy(desc(mediaItems.addedAt))
     return NextResponse.json(items)
   } catch (error) {
     console.error("Failed to fetch media items:", error)

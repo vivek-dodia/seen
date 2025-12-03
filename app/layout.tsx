@@ -26,6 +26,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
+			<head>
+				<link rel="icon" href="/icon.svg?v=2" type="image/svg+xml" />
+			</head>
 			<body
 				className={`${geistMono.variable} ${instrumentSerif.variable} antialiased`}
 			>
