@@ -8,12 +8,11 @@ import Image from "next/image"
 import { getMediaList, addMediaItem, removeMediaItem, syncLocalStorageToDatabase } from "@/lib/storage"
 import type { MediaItem, OMDBSearchResponse, OMDBResponse, TVDBSearchResponse } from "@/lib/types"
 
-const ADMIN_PASSWORD = "seen2024"
-
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
+  const [isVerifying, setIsVerifying] = useState(false)
 
   const [mediaList, setMediaList] = useState<MediaItem[]>([])
   const [activeTab, setActiveTab] = useState<"movies" | "shows">("movies")
@@ -23,6 +22,7 @@ export default function AdminPage() {
   const [isSyncing, setIsSyncing] = useState(false)
 
   useEffect(() => {
+    document.title = "Seen"
     const auth = sessionStorage.getItem("admin-auth")
     if (auth === "true") {
       setIsAuthenticated(true)
@@ -39,14 +39,31 @@ export default function AdminPage() {
     }
   }, [isAuthenticated])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true)
-      sessionStorage.setItem("admin-auth", "true")
-      setPasswordError("")
-    } else {
-      setPasswordError("Incorrect password")
+    setIsVerifying(true)
+    setPasswordError("")
+
+    try {
+      const response = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      })
+
+      const data = await response.json()
+
+      if (data.valid) {
+        setIsAuthenticated(true)
+        sessionStorage.setItem("admin-auth", "true")
+        setPasswordError("")
+      } else {
+        setPasswordError("Incorrect password")
+      }
+    } catch (error) {
+      setPasswordError("Authentication failed")
+    } finally {
+      setIsVerifying(false)
     }
   }
 
@@ -144,12 +161,12 @@ export default function AdminPage() {
         <div className="w-full max-w-sm px-6">
           <Link
             href="/"
-            className="block mb-8 font-mono uppercase text-xs tracking-widest text-center hover:opacity-70 transition-opacity"
+            className="block mb-8 font-serif text-base italic text-center hover:opacity-70 transition-opacity"
           >
-            Back
+            ← Back
           </Link>
 
-          <h1 className="font-serif text-2xl italic text-center mb-8">Admin</h1>
+          <h1 className="font-serif text-3xl italic text-center mb-8">Admin</h1>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -162,9 +179,10 @@ export default function AdminPage() {
             {passwordError && <p className="font-mono text-xs text-red-400">{passwordError}</p>}
             <button
               type="submit"
-              className="w-full bg-white/10 border border-white/20 px-4 py-3 font-mono uppercase text-xs tracking-widest hover:bg-white/20 transition-all"
+              disabled={isVerifying}
+              className="w-full bg-white/10 border border-white/20 px-4 py-3 font-serif italic text-base tracking-wide hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login
+              {isVerifying ? "Verifying..." : "Login"}
             </button>
           </form>
         </div>

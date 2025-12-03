@@ -1,5 +1,10 @@
 import InfiniteGallery from "@/components/InfiniteGallery"
 import Link from "next/link"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Seen",
+}
 
 export default function Home() {
   const sampleImages = [
@@ -29,10 +34,10 @@ export default function Home() {
         </h1>
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 flex justify-center z-10">
+      <div className="fixed top-1/2 left-0 right-0 flex justify-center z-10 mt-32">
         <Link
           href="/seen"
-          className="px-8 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white font-mono uppercase text-sm tracking-widest hover:bg-white/20 transition-all duration-300"
+          className="px-10 py-4 bg-white/5 backdrop-blur-md border border-white/20 text-white font-serif text-2xl italic tracking-wide hover:bg-white/10 hover:scale-105 transition-all duration-300"
         >
           Seen
         </Link>
